@@ -1,0 +1,16 @@
+
+
+func parseTo{{.RPCStructName}}(model {{.ModelStructName}}) *{{.RPCPackageName}}{{.RPCStructName}} {
+    return &{{.RPCPackageName}}{{.RPCStructName}}{
+       {{range $v := .FieldValues}} {{$v.FieldName}}:{{$v.Value}},
+       {{end}}
+    }
+}
+
+func parseTo{{.RPCStructName}}List(models []{{.ModelStructName}}) []*{{.RPCPackageName}}{{.RPCStructName}} {
+    results:=make([]*{{.RPCPackageName}}{{.RPCStructName}},0,len(models))
+    for _, model := range models {
+    	results = append(results,parseTo{{.RPCStructName}}(model))
+    }
+    return results
+}

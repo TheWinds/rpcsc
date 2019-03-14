@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RPC Model 转换方法生成</title>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="index.css">
+    <script src="vue.min.js"></script>
+    <!-- 引入组件库 -->
+    <script src="element-ui-index.js"></script>
+    <script src="axios.min.js"></script>
+    <style>
+        .el-textarea {
+            font-size: 17px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <el-row>
+            <el-col :span="12">
+                <p>原始 Model定义:</p>
+                <el-input :autosize="{ minRows: 12, maxRows: 12}" type="textarea" v-model="model_struct" :placeholder="model_struct_palceholder"></el-input>
+                <p>RPC Model 包名:</p>
+                <el-input  v-model="rpc_package_name" placeholder="pb"></el-input>
+                <p>RPC Model定义:</p>
+                <el-input :autosize="{ minRows: 12, maxRows: 12}" type="textarea" v-model="rpc_struct" :placeholder="rpc_struct_palceholder"></el-input>
+            </el-col>
+            <el-col :offset="1" :span="11">
+                <p>输出:</p>
+                <el-input :autosize="{ minRows: 24, maxRows: 24}" type="textarea" v-model="output" :placeholder="output_placeholder">sdsd</el-input>
+            </el-col>
+        </el-row>
+    </div>
+</body>
+<script>
+    new Vue({
+        el:'#app',
+        data:function () {
+            return {
+                rpc_package_name:"",
+                model_struct:"",
+                model_struct_palceholder:"type ChannelSet struct {\n" +
+                    "\tSetId       int    `gorm:\"primary_key\" json:\"setId\"` //rpc:Id\n" +
+                    "\tTitle       string `json:\"title\"`\n" +
+                    "\tBanner      string `json:\"banner\"` //rpc:BannerImg\n" +
+                    "\tBriefIntroduction string \t`json:\"briefIntroduction\"`\n" +
+                    "\tCanalId     int    `json:\"canalId\"`\n" +
+                    "\tShareTitle  string `json:\"shareTitle\"`\n" +
+                    "\tShareBrief  string `json:\"shareBrief\"`\n" +
+                    "\tShareImg    string `json:\"shareImg\"`\n" +
+                    "\tReadCounter int\n" +
+                    "\tCreateTime  int64 `json:\"createTime\"`\n" +
+                    "\tUpdateTime  int64\n" +
+                    "\tDelFlag     int\n" +
+                    "}",
+                rpc_struct:"",
+                rpc_struct_palceholder:"type UpdateReq struct {\n" +
+                    "   \tId                   int64    `protobuf:\"varint,1,opt,name=id,proto3\" json:\"id,omitempty\"`\n" +
+                    "   \tTitle                string   `protobuf:\"bytes,2,opt,name=title,proto3\" json:\"title,omitempty\"`\n" +
+                    "   \tBannerImg            string   `protobuf:\"bytes,3,opt,name=banner_img,json=bannerImg,proto3\" json:\"banner_img,omitempty\"`\n" +
+                    "   \tBriefIntroduction    string   `protobuf:\"bytes,4,opt,name=brief_introduction,json=briefIntroduction,proto3\" json:\"brief_introduction,omitempty\"`\n" +
+                    "   \tShareImg             string   `protobuf:\"bytes,5,opt,name=share_img,json=shareImg,proto3\" json:\"share_img,omitempty\"`\n" +
+                    "   \tXXX_NoUnkeyedLiteral struct{} `json:\"-\"`\n" +
+                    "   \tXXX_unrecognized     []byte   `json:\"-\"`\n" +
+                    "   \tXXX_sizecache        int32    `json:\"-\"`\n" +
+                    "   }",
+                output:"",
+                output_placeholder:"func parseToUpdateReq(model ChannelSet) *pb.UpdateReq {\n" +
+                    "    return &pb.UpdateReq{\n" +
+                    "        BannerImg:model.Banner,\n" +
+                    "        BriefIntroduction:model.BriefIntroduction,\n" +
+                    "        Id:int64(model.SetId),\n" +
+                    "        ShareImg:model.ShareImg,\n" +
+                    "        Title:model.Title,\n" +
+                    "       \n" +
+                    "    }\n" +
+                    "}\n" +
+                    "\n" +
+                    "func parseToUpdateReqList(models []ChannelSet) []*pb.UpdateReq {\n" +
+                    "    results:=make([]*pb.UpdateReq,0,len(models))\n" +
+                    "    for _, model := range models {\n" +
+                    "        results = append(results,parseToUpdateReq(model))\n" +
+                    "    }\n" +
+                    "    return results\n" +
+                    "}\n"
+            }
+        },
+        methods:{
+            genFunc(){
+                let that = this
+                axios.post('/gen',{
+                    model_struct:this.model_struct,
+                    rpc_struct:this.rpc_struct,
+                    rpc_package_name:this.rpc_package_name,
+                }).then(function (resp) {
+                    console.log(resp)
+
+                    that.output = resp.data
+                    
+                }).catch(function (err) {
+                    console.log(err)
+                    that.output = err
+                })
+            }
+        },
+        watch:{
+            model_struct(){
+                this.genFunc()
+            },
+            rpc_struct(){
+                this.genFunc()
+            },
+            rpc_package_name(){
+                this.genFunc()
+            }
+        }
+    })
+</script>
+</html>
