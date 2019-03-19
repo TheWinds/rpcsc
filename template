@@ -1,16 +1,20 @@
-
-
-func parseTo{{.RPCStructName}}(model {{.ModelStructName}}) *{{.RPCPackageName}}{{.RPCStructName}} {
+// 从base model 和 rpc model 生成的的转换函数
+func parseTo{{.RPCStructName}}(model models.{{.ModelStructName}}) *{{.RPCPackageName}}{{.RPCStructName}} {
     return &{{.RPCPackageName}}{{.RPCStructName}}{
        {{range $v := .FieldValues}} {{$v.FieldName}}:{{$v.Value}},
        {{end}}
     }
 }
 
-func parseTo{{.RPCStructName}}List(models []{{.ModelStructName}}) []*{{.RPCPackageName}}{{.RPCStructName}} {
+func parseTo{{.RPCStructName}}List(models []models.{{.ModelStructName}}) []*{{.RPCPackageName}}{{.RPCStructName}} {
     results:=make([]*{{.RPCPackageName}}{{.RPCStructName}},0,len(models))
     for _, model := range models {
     	results = append(results,parseTo{{.RPCStructName}}(model))
     }
     return results
+}
+// 从 base model 生成的 RPC message
+message {{.ModelStructFileds.Name}} {
+       {{range $i,$v := .ModelStructFileds.Fields}} {{$v.Type|toRPCType}} {{$v.Name|camelString}} = {{$i|add1}};
+       {{end}}
 }

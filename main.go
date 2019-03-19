@@ -66,10 +66,11 @@ type fieldValue struct {
 
 // 渲染
 type renderModel struct {
-	RPCPackageName  string
-	RPCStructName   string
-	ModelStructName string
-	FieldValues     []fieldValue
+	RPCPackageName    string
+	RPCStructName     string
+	ModelStructName   string
+	ModelStructFileds *structInfo
+	FieldValues       []fieldValue
 }
 
 // 生成genParseFunc
@@ -98,10 +99,11 @@ func genParseFunc(rpcStructSrc, modelStructSrc, rpcStructPackageName string) (st
 	}
 
 	funcRenderModel := &renderModel{
-		RPCPackageName:  rpcStructPackageName,
-		ModelStructName: modelStructInfo.Name,
-		RPCStructName:   rpcStructInfo.Name,
-		FieldValues:     make([]fieldValue, 0, len(fieldMap)),
+		RPCPackageName:    rpcStructPackageName,
+		ModelStructName:   modelStructInfo.Name,
+		RPCStructName:     rpcStructInfo.Name,
+		ModelStructFileds: modelStructInfo,
+		FieldValues:       make([]fieldValue, 0, len(fieldMap)),
 	}
 
 	for key, value := range fieldMap {
@@ -124,6 +126,7 @@ func genParseFunc(rpcStructSrc, modelStructSrc, rpcStructPackageName string) (st
 		return "", err
 	}
 	tmplFile, _ := ioutil.ReadFile("template")
+	tmpl.Funcs(template.FuncMap{"camelString": camelString, "add1": add1, "toRPCType": toRPCType})
 	tmpl, err = tmpl.Parse(string(tmplFile))
 	if err != nil {
 		return "", err
@@ -206,4 +209,47 @@ func getStructInfo(structDef string) (*structInfo, error) {
 		return true
 	})
 	return info, nil
+}
+
+// 模板过滤函数
+func snakeString(s string) string {
+	data := make([]byte, 0, len(s)*2)
+	j := false
+	num := len(s)
+	for i := 0; i < num; i++ {
+		d := s[i]
+		if i > 0 && d >= 'A' && d <= 'Z' && j {
+			data = append(data, '_')
+		}
+		if d != '_' {
+			j = true
+		}
+		data = append(data, d)
+	}
+	return strings.ToLower(string(data[:]))
+}
+
+func camelString(s string) string {
+	s = strings.TrimSpace(s)
+	firstLowCase := strings.ToLower(string(s[0]))
+	return firstLowCase + s[1:]
+}
+
+func toRPCType(s string) string {
+	switch s {
+	case "int", "int64", "time.Time":
+		return "int64"
+	case "int32":
+		return "int64"
+	case "string":
+		return "string"
+	case "float32", "float64":
+		return "float"
+	default:
+		return "!unknown"
+	}
+}
+
+func add1(n int) int {
+	return n + 1
 }
